@@ -3,78 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MensVest - Seu Guarda-Roupa Virtual</title>
+  <title>MensVest Pro</title>
+  <script src="https://www.paypal.com/sdk/js?client-id=COLE_SEU_CLIENT_ID_AQUI&currency=USD"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
-    
-    body { 
-      font-family: 'Poppins', sans-serif; 
-      margin: 0; 
-      background: linear-gradient(135deg, #111 0%, #2a2a2a 100%);
-      color: white;
-      text-align: center; 
-      min-height: 100vh;
-    }
-    header { 
-      background: rgba(0,0,0.3); 
-      backdrop-filter: blur(10px);
-      color: white; 
-      padding: 25px; 
-      font-size: 28px; 
-      font-weight: 700;
-      letter-spacing: 2px;
-    }
-   .btn { 
-      background: white; 
-      color: #111; 
-      padding: 16px 32px; 
-      border: none; 
-      border-radius: 16px; 
-      font-size: 16px; 
-      font-weight: 600;
-      margin: 10px; 
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(255,255,255,0.2);
-      transition: transform 0.2s;
-    }
-   .btn:hover { transform: scale(1.05); }
-   .grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
-      gap: 15px; 
-      padding: 20px; 
-      max-width: 800px;
-      margin: 0 auto;
-    }
-   .item { 
-      background: rgba(255,255,255,0.1); 
-      border-radius: 16px; 
-      padding: 10px;
-      backdrop-filter: blur(5px);
-    }
-   .item img { 
-      width: 100%; 
-      border-radius: 12px; 
-      aspect-ratio: 1/1;
-      object-fit: cover;
-    }
-   .item button {
-      background: #ff3b3b;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 5px 10px;
-      margin-top: 8px;
-      cursor: pointer;
-   }
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: linear-gradient(135deg, #111 0%, #2a2a2a 100%); color: white; text-align: center; }
+    header { padding: 25px; font-size: 28px; font-weight: 700; }
+    .btn { background: white; color: #111; padding: 16px 24px; border: none; border-radius: 16px; font-size: 15px; font-weight: 600; margin: 8px; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .item { background: rgba(255,255,255,0.1); border-radius: 16px; padding: 10px; }
+    .item img { width: 100%; border-radius: 12px; aspect-ratio: 1/1; object-fit: cover; }
+    .paywall { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index: 999; overflow-y: auto; }
+    .card { background: #222; padding: 25px; border-radius: 20px; margin: 15px; width: 85%; max-width: 320px; }
     input[type="file"] { display: none; }
-    h2 { font-weight: 600; }
+    #paypal-button-container-mensal, #paypal-button-container-anual { margin-top: 15px; }
   </style>
 </head>
 <body>
-  <header>MensVest</header>
+  <header>MensVest Pro</header>
 
-  <div style="padding: 30px 20px;">
-    <h2>Seu Guarda-Roupa Virtual</h2>
-  <input type="file" id="fileInput" accept="image/*" style="display:none">
-<button class="btn" onclick="document.getElementById('fileInput').click()">+ Adicionar Roupa</button>
+  <div id="app" style="display:none">
+    <div style="padding: 20px;">
+      <h2>Seu Guarda-Roupa Virtual</h2>
+      <input type="file" id="galeria" accept="image/*">
+      <input type="file" id="camera" accept="image/*" capture="environment">
+      <button class="btn" onclick="document.getElementById('galeria').click()">📁 Galeria</button>
+      <button class="btn" onclick="document.getElementById('camera').click()">📸 Câmera</button>
+      <button class="btn" style="background:#FFD700" onclick="montarLook()">✨ Montar Look</button>
+    </div>
+    <div id="areaLook"></div>
+    <div class="grid" id="guardaRoupa"></div>
+  </div>
+
+  <div id="paywall" class="paywall">
+    <h1>MensVest Pro</h1>
+    <p id="trialText">Seu teste grátis de 3 dias está ativo!</p>
+    
+    <div class="card">
+      <h3>Mensal</h3>
+      <h2>$9.99/mês</h2>
+      <div id="paypal-button-container-mensal"></div>
+    </div>
+
+    <div class="card">
+      <h3>Anual</h3>
+      <h2>$59.99/ano</h2>
+      <p>2 meses grátis</p>
+      <div id="paypal-button-container-anual"></div>
+    </div>
+  </div>
+
+  <script>
+    let roupas = JSON.parse(localStorage.getItem('mensvest')) || [];
+    let user = JSON.parse(localStorage.getItem('mensvest_user')) || { inicio: new Date().getTime(), pro: false };
+
+    function checkAcesso() {
+      const agora = new Date().getTime();
+      const diasTeste = 3 * 24 * 60 * 60 * 1000;
+      const fimTeste = user.inicio + diasTeste;
+
+      if(user.pro || agora < fimTeste) {
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('paywall').style.display = 'none';
+        if(!user.pro) {
+          let diasRestantes = Math.ceil((fimTeste - agora) / (24 * 60 * 60 * 1000));
+          document.getElementById('trialText').innerText = `Teste grátis: ${diasRestantes} dias restantes`;
+        }
+      }
+      mostrarRoupas();
+      carregarBotoesPaypal();
+    }
+
+    function restaurar() {
+      user.pro = true;
+      localStorage.setItem('mensvest_user', JSON.stringify(user));
+      checkAcesso();
+    }
+
+    function carregarBotoesPaypal() {
+      // BOTÃO MENSAL
+      paypal.Buttons({
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [{ amount: { value: '9.99' }, description: 'MensVest Pro Mensal' }]
+          });
+        },
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function() { restaurar(); });
+        }
+      }).render('#paypal-button-container-mensal');
+
+      // BOTÃO ANUAL
+      paypal.Buttons({
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [{ amount: { value: '59.99' }, description: 'MensVest Pro Anual' }]
+          });
+        },
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function() { restaurar(); });
+        }
+      }).render('#paypal-button-container-anual');
+    }
+
+    function salvar() { localStorage.setItem('mensvest', JSON.stringify(roupas)); mostrarRoupas(); }
+    function mostrarRoupas() {
+      const grid = document.getElementById('guardaRoupa');
+      grid.innerHTML = roupas.length === 0 ? '<p style="grid-column: 1/-1;">Adicione suas primeiras roupas 👆</p>' : 
+      roupas.map((r, i) => `<div class="item"><img src="${r}"><button onclick="remover(${i})" style="background:#ff3b3b;color:white;border:none;border-radius:8px;padding:5px 10px;margin-top:8px">Remover</button></div>`).join('');
+    }
+    function adicionarFoto(event) {
+      const file = event.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { roupas.push(reader.result); salvar(); }
+      reader.readAsDataURL(file);
+    }
+    document.getElementById('galeria').onchange = adicionarFoto;
+    document.getElementById('camera').onchange = adicionarFoto;
+    function remover(i) { roupas.splice(i, 1); salvar(); }
+    function montarLook() {
+      if(roupas.length < 2) return alert('Adiciona pelo menos 2 roupas primeiro!');
+      let look = []; let copia = [...roupas];
+      for(let i=0; i<3 && copia.length > 0; i++){
+        let r = Math.floor(Math.random() * copia.length);
+        look.push(copia[r]); copia.splice(r,1);
+      }
+      document.getElementById('areaLook').innerHTML = `
+        <div style="border: 2px dashed white; padding: 20px; margin: 20px; border-radius: 20px;">
+          <h2>Seu Look de Hoje ✨</h2>
+          <div class="grid">${look.map(r => `<div class="item"><img src="${r}"></div>`).join('')}</div>
+          <button class="btn" onclick="document.getElementById('areaLook').innerHTML=''">Fechar Look</button>
+        </div>`;
+    }
+    checkAcesso();
+  </script>
+</body>
+</html>
