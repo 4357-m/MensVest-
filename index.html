@@ -1,133 +1,142 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MensVest Pro</title>
-  <script src="https://www.paypal.com/sdk/js?client-id=COLE_SEU_CLIENT_ID_AQUI&currency=USD"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
-    body { font-family: 'Poppins', sans-serif; margin: 0; background: linear-gradient(135deg, #111 0%, #2a2a2a 100%); color: white; text-align: center; }
-    header { padding: 25px; font-size: 28px; font-weight: 700; }
-   .btn { background: white; color: #111; padding: 14px 20px; border: none; border-radius: 16px; font-size: 14px; font-weight: 600; margin: 6px; cursor: pointer; }
-   .btn-pro { background: #FFD700; }
-   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; padding: 20px; max-width: 900px; margin: 0 auto; }
-   .item { background: rgba(255,255,255,0.1); border-radius: 16px; padding: 10px; }
-   .item img { width: 100%; border-radius: 12px; aspect-ratio: 1/1; object-fit: cover; }
-   .paywall { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index: 999; overflow-y: auto; }
-   .card { background: #222; padding: 25px; border-radius: 20px; margin: 15px; width: 85%; max-width: 320px; }
-    select { padding: 12px; border-radius: 12px; border: none; font-size: 16px; margin: 10px; background: #333; color: white; }
-    input[type="file"] { display: none; }
-   .loader { display: none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MensVest - Seu Estilista IA</title>
+<style>
+body { font-family: Arial; background: #111; color: #fff; text-align: center; padding: 20px; }
+.btn { background: #333; color: #fff; border: none; padding: 12px 20px; margin: 5px; border-radius: 8px; cursor: pointer; }
+.btn-pro { background: linear-gradient(90deg, #FFD700, #FFA500); color: #000; font-weight: bold; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+.grid img { width: 100%; border-radius: 8px; background: #222; }
+.loader { display: none; }
+select { width: 100%; margin-top: 5px; background: #333; color: #fff; border: none; padding: 5px; border-radius: 5px; }
+</style>
 </head>
 <body>
-  <header>MensVest Pro</header>
 
-  <div id="app" style="display:none">
-    <div style="padding: 20px;">
-      <h2>Seu Guarda-Roupa Virtual</h2>
-      <input type="file" id="galeria" accept="image/*">
-      <input type="file" id="camera" accept="image/*" capture="environment">
-      <input type="file" id="armario" accept="image/*" capture="environment">
+<h1>MensVest 👔</h1>
 
-      <button class="btn" onclick="document.getElementById('galeria').click()">📁 1 Peça</button>
-      <button class="btn" onclick="document.getElementById('camera').click()">📸 1 Peça</button>
-      <button class="btn-pro" onclick="document.getElementById('armario').click()">🧠 Foto do Armário</button>
-      <p class="loader" id="loader">Recortando roupas com IA... aguarde 10s</p>
+<h2>Seu Guarda-Roupa Virtual</h2>
+<input type="file" id="galeria" accept="image/*" style="display:none">
+<input type="file" id="camera" accept="image/*" capture="camera" style="display:none">
+<input type="file" id="armario" accept="image/*" multiple style="display:none">
 
-      <h3>Qual a ocasião?</h3>
-      <select id="ocasiao">
-        <option value="casual">😎 Casual</option>
-        <option value="trabalho">💼 Trabalho</option>
-        <option value="festa">🎉 Festa</option>
-        <option value="esporte">🏃 Esporte</option>
-      </select>
-      <br>
-      <button class="btn-pro" onclick="montarLookInteligente()">✨ Montar Look</button>
-    </div>
-    <div id="areaLook"></div>
-    <div class="grid" id="guardaRoupa"></div>
-  </div>
+<button class="btn" onclick="document.getElementById('camera').click()">📸 Foto Individual</button>
+<button class="btn" onclick="document.getElementById('galeria').click()">🖼️ Da Galeria</button>
+<button class="btn-pro" onclick="document.getElementById('armario').click()">🧠 Foto do Armário</button>
 
-  <div id="paywall" class="paywall">...mesmo paywall de antes... </div>
+<div class="loader" id="loader">Recortando roupas...</div>
 
-  <script>
-    let roupas = JSON.parse(localStorage.getItem('mensvest')) || [];
-    let user = JSON.parse(localStorage.getItem('mensvest_user')) || { inicio: new Date().getTime(), pro: false };
-       const REMOVE_BG_KEY = '13ELAgTUNrotLEoVNNphngKm';
+<h3>Qual a ocasião?</h3>
+<select id="ocasiao">
+  <option value="casual">😎 Casual</option>
+  <option value="trabalho">💼 Trabalho</option>
+  <option value="festa">🎉 Festa</option>
+  <option value="esporte">🏃 Esporte</option>
+</select>
 
-    function checkAcesso() { /* igual ao anterior */
-      const agora = new Date().getTime(); const diasTeste = 3 * 24 * 60 * 60 * 1000;
-      if(user.pro || agora < user.inicio + diasTeste) {
-        document.getElementById('app').style.display = 'block';
-        document.getElementById('paywall').style.display = 'none';
-      } mostrarRoupas(); carregarBotoesPaypal();
+<button class="btn-pro" onclick="montarLookInteligente()">✨ Montar Look Inteligente</button>
+
+<div id="areaLook"></div>
+<div class="grid" id="guardaRoupa"></div>
+
+<script>
+const REMOVE_BG_KEY = '13ELAgTUNrotLEoVNNphngKm'; // SUA CHAVE
+let roupas = JSON.parse(localStorage.getItem('mensVestRoupas')) || [];
+
+function salvar() {
+    localStorage.setItem('mensVestRoupas', JSON.stringify(roupas));
+    carregarGuardaRoupa();
+}
+
+async function recortarRoupa(file) {
+    document.getElementById('loader').style.display = 'block';
+    let formData = new FormData();
+    formData.append('image_file', file);
+    formData.append('size', 'auto');
+
+    let res = await fetch('https://api.remove.bg/v1.0/removebg', {
+        method: 'POST',
+        headers: { 'X-Api-Key': REMOVE_BG_KEY },
+        body: formData
+    });
+    let blob = await res.blob();
+    document.getElementById('loader').style.display = 'none';
+    return URL.createObjectURL(blob);
+}
+
+// FOTO DO ARMÁRIO - SEM POPUP
+document.getElementById('armario').onchange = async (e) => {
+    for(let file of e.target.files) {
+        let urlRecortada = await recortarRoupa(file);
+        roupas.push({src: urlRecortada, categoria: 'peca', id: Date.now() + Math.random()});
+    }
+    salvar();
+    alert('Peças adicionadas! Defina o tipo no Guarda-Roupa')
+}
+
+// FOTO INDIVIDUAL
+document.getElementById('camera').onchange = document.getElementById('galeria').onchange = async (e) => {
+    let file = e.target.files[0];
+    let urlRecortada = await recortarRoupa(file);
+    roupas.push({src: urlRecortada, categoria: 'peca', id: Date.now()});
+    salvar();
+}
+
+function editarTipo(id, novoTipo) {
+    const roupa = roupas.find(r => r.id === id);
+    if(roupa) roupa.categoria = novoTipo;
+    salvar();
+}
+
+function carregarGuardaRoupa() {
+    const grid = document.getElementById('guardaRoupa');
+    grid.innerHTML = roupas.map(r => `
+        <div>
+            <img src="${r.src}">
+            <select onchange="editarTipo(${r.id}, this.value)">
+                <option ${r.categoria=='camisa'?'selected':''} value="camisa">Camisa</option>
+                <option ${r.categoria=='calca'?'selected':''} value="calca">Calça</option>
+                <option ${r.categoria=='sapato'?'selected':''} value="sapato">Sapato</option>
+                <option ${r.categoria=='peca'?'selected':''} value="peca">Outro</option>
+            </select>
+        </div>
+    `).join('');
+}
+
+function montarLookInteligente() {
+    if (roupas.length < 3) {
+        alert("Adiciona pelo menos 3 peças primeiro!")
+        return
+    }
+    
+    const camisas = roupas.filter(r => r.categoria === 'camisa');
+    const calcas = roupas.filter(r => r.categoria === 'calca');
+    const sapatos = roupas.filter(r => r.categoria === 'sapato');
+    
+    if(camisas.length === 0 || calcas.length === 0) {
+        alert("Defina pelo menos 1 Camisa e 1 Calça no Guarda-Roupa")
+        return
     }
 
-    async function recortarRoupa(file) {
-      document.getElementById('loader').style.display = 'block';
-      let formData = new FormData();
-      formData.append('image_file', file);
-      formData.append('size', 'preview');
+    const camisa = camisas[Math.floor(Math.random() * camisas.length)];
+    const calca = calcas[Math.floor(Math.random() * calcas.length)];
+    const sapato = sapatos.length > 0? sapatos[Math.floor(Math.random() * sapatos.length)] : null;
 
-      let res = await fetch('https://api.remove.bg/v1.0/removebg', {
-        method: 'POST', headers: { 'X-Api-Key': REMOVE_BG_KEY }, body: formData
-      });
-      let blob = await res.blob();
-      document.getElementById('loader').style.display = 'none';
-      return URL.createObjectURL(blob);
-    }
+    document.getElementById('areaLook').innerHTML = `
+        <h3>Seu Look ${document.getElementById('ocasiao').value}</h3>
+        <div style="display:flex; justify-content:center; gap:10px">
+            <img src="${camisa.src}" width="120">
+            <img src="${calca.src}" width="120">
+            ${sapato? `<img src="${sapato.src}" width="120">` : ''}
+        </div>
+    `;
+}
 
-    document.getElementById('armario').onchange = async function(e){
-      let file = e.target.files[0];
-      let urlRecortada = await recortarRoupa(file);
-      let categoria = prompt("Que tipo de roupa é essa? camisa, calca, sapato, short");
-      roupas.push({src: urlRecortada, categoria: categoria.toLowerCase()});
-      salvar();
-      alert('Roupa adicionada! Repita pra adicionar mais peças da foto');
-    }
+carregarGuardaRoupa();
+</script>
 
-    // O resto é igual: adicionarFoto, salvar, mostrarRoupas, montarLookInteligente
-    function adicionarFoto(event) {
-      const file = event.target.files[0]; if(!file) return;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        let urlRecortada = await recortarRoupa(file); // Já recorta mesmo 1 peça
-        let categoria = prompt("Que tipo de roupa é? camisa, calca, sapato, short");
-        roupas.push({src: urlRecortada, categoria: categoria.toLowerCase()});
-        salvar();
-      }
-      reader.readAsDataURL(file);
-    }
-    document.getElementById('galeria').onchange = adicionarFoto;
-    document.getElementById('camera').onchange = adicionarFoto;
-
-    function salvar() { localStorage.setItem('mensvest', JSON.stringify(roupas)); mostrarRoupas(); }
-    function mostrarRoupas() {
-      const grid = document.getElementById('guardaRoupa');
-      grid.innerHTML = roupas.length === 0? '<p style="grid-column: 1/-1;">Tira foto do armário pra começar 👆</p>' :
-      roupas.map((r, i) => `<div class="item"><img src="${r.src}"><p>${r.categoria}</p><button onclick="remover(${i})">Remover</button></div>`).join('');
-    }
-    function remover(i) { roupas.splice(i, 1); salvar(); }
-
-    function montarLookInteligente() {
-      const ocasiao = document.getElementById('ocasiao').value;
-      let pool = roupas;
-      if(ocasiao === 'trabalho') pool = roupas.filter(r => ['camisa','calca','sapato'].includes(r.categoria));
-      if(ocasiao === 'casual') pool = roupas.filter(r => ['camisa','short','sapato'].includes(r.categoria));
-      if(pool.length < 2) return alert('Adiciona mais roupas primeiro!');
-      let look = []; let categorias = [...new Set(pool.map(r=>r.categoria))];
-      categorias.forEach(cat => {
-        let itens = pool.filter(r => r.categoria === cat);
-        if(itens.length > 0) look.push(itens[Math.floor(Math.random()*itens.length)].src);
-      });
-      document.getElementById('areaLook').innerHTML = `<div style="border: 2px dashed #FFD700; padding: 20px; margin: 20px; border-radius: 20px;"><h2>Seu Look ${ocasiao} ✨</h2><div class="grid">${look.map(r => `<div class="item"><img src="${r}"></div>`).join('')}</div></div>`;
-    }
-
-    function carregarBotoesPaypal() { /* igual ao anterior */ }
-    function restaurar() { user.pro = true; localStorage.setItem('mensvest_user', JSON.stringify(user)); checkAcesso(); }
-    checkAcesso();
-  </script>
 </body>
 </html>
