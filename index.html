@@ -1,390 +1,162 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MensVest - IA Stylist</title>
-  <style>
-    :root {
-      --bg: #0d0d0d;
-      --card-bg: #1a1a1a;
-      --accent: #FFD700;
-      --text: #ffffff;
-      --text-muted: #aaa;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    h1, h2, h3 { text-align: center; margin-bottom: 8px; }
-    .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-      border: 1px solid #2a2a2a;
-    }
-
-    .api-key-container {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    input[type="password"], select {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: #252525;
-      color: white;
-      box-sizing: border-box;
-    }
-
-    .btn {
-      background: linear-gradient(90deg, #FFD700, #FFA500);
-      color: #000;
-      font-weight: bold;
-      border: none;
-      padding: 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 16px;
-      transition: opacity 0.2s;
-    }
-
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 15px;
-    }
-
-    .item-card {
-      background: #252525;
-      border-radius: 8px;
-      padding: 8px;
-      font-size: 12px;
-      text-align: center;
-      position: relative;
-    }
-
-    .item-card img {
-      width: 100%;
-      height: 90px;
-      object-fit: cover;
-      border-radius: 6px;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #333;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 10px;
-      margin-top: 4px;
-      color: var(--accent);
-    }
-
-    .loader {
-      display: none;
-      text-align: center;
-      color: var(--accent);
-      margin: 15px 0;
-      font-size: 14px;
-    }
-
-    .look-container {
-      background: #222;
-      border: 1px solid var(--accent);
-      border-radius: 12px;
-      padding: 15px;
-      margin-top: 15px;
-    }
-
-    .look-images {
-      display: flex;
-      justify-content: space-around;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .look-images img {
-      width: 30%;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-
-    .reasoning {
-      font-size: 13px;
-      color: #ddd;
-      line-height: 1.4;
-      background: #181818;
-      padding: 10px;
-      border-radius: 6px;
-    }
-
-    .btn-delete {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      background: rgba(255, 0, 0, 0.7);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MensVest - IA Stylist</title>
+<style>
+:root{--bg:#0D0D0D;--card-bg:#1a1a1a;--accent:#FFD700;--text:#fff;--text-muted:#aaa}
+body{font-family:system-ui;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;padding:20px}
+h1,h2{text-align:center}.subtitle{text-align:center;color:var(--text-muted)}
+.card{background:var(--card-bg);border-radius:16px;padding:20px;margin-bottom:20px;border:1px solid #2a2a2a}
+input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#252525;color:white;margin-bottom:10px;box-sizing:border-box}
+.btn{background:linear-gradient(90deg,#FFD700,#FFA500);color:#000;font-weight:bold;border:none;padding:14px;border-radius:10px;cursor:pointer;width:100%;font-size:16px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:15px}
+.item-card{background:#252525;border-radius:8px;padding:8px;text-align:center;font-size:12px;position:relative}
+.item-card img{width:100%;height:90px;object-fit:cover;border-radius:6px}
+.btn-delete{position:absolute;top:4px;right:4px;background:rgba(255,0,0,.7);color:white;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer}
+.loader{text-align:center;color:var(--accent);margin:15px 0;display:none}
+.look-container{background:#222;border:1px solid var(--accent);border-radius:12px;padding:15px;margin-top:15px}
+.reasoning{font-size:13px;color:#ddd;background:#181818;padding:10px;border-radius:6px}
+</style>
 </head>
 <body>
 
-  <h1>MensVest 👔</h1>
-  <p class="subtitle">Seu estilista pessoal acionado por IA</p>
+<h1>MensVest 👔</h1>
+<p class="subtitle">Seu estilista pessoal acionado por IA</p>
 
-  <div class="card">
+<div class="card">
     <h3>Configuração</h3>
-    <input type="password" id="apiKey" placeholder="Insira sua OpenAI API Key (sk-...)" onchange="salvarKey()">
-  </div>
+    <input type="password" id="apiKey" placeholder="Insira sua OpenAI API Key (sk-...)" onkeyup="salvarKey()">
+</div>
 
-  <div class="card">
-    <h2>1. Seu Armário</h2>
-    <p style="font-size: 13px; color: #888;">Tire foto das suas roupas. A IA irá analisá-las automaticamente.</p>
-    
-    <input type="file" id="inputFoto" accept="image/*" style="display: none;" onchange="analisarEAdicionarRoupa(this)">
+<div class="card">
+    <h3>1. Seu Armário</h3>
+    <p style="font-size:13px;color:#888">Tire foto das suas roupas. A IA irá analisá-las.</p>
+    <input type="file" id="inputFoto" accept="image/*" style="display:none" onchange="analisarRoupa(event)">
     <button class="btn" onclick="document.getElementById('inputFoto').click()">📷 Tirar Foto / Enviar</button>
-    
     <div class="loader" id="loaderAnalise">⚡ IA analisando a peça de roupa...</div>
     <div class="grid" id="gridArmario"></div>
-  </div>
+</div>
 
-  <div class="card">
-    <h2>2. Gerar Look</h2>
+<div class="card">
+    <h3>2. Gerar Look</h3>
     <select id="ocasiao">
-      <option value="Casual do dia a dia">😎 Casual</option>
-      <option value="Reunião de Trabalho / Formal">💼 Trabalho</option>
-      <option value="Encontro ou Festa Noturna">🎉 Festa / Night</option>
-      <option value="Atividade Esportiva">🏃 Esporte</option>
+        <option value="Casual do dia a dia">Casual</option>
+        <option value="Reunião de Trabalho">Trabalho</option>
+        <option value="Encontro ou Festa">Festa</option>
+        <option value="Atividade Esportiva">Esporte</option>
     </select>
-    
     <br><br>
-    <button class="btn" onclick="gerarLookIA()">✨ Combinar Look Inteligente</button>
-    
-    <div class="loader" id="loaderLook">🧠 O estilista IA está montando o melhor look...</div>
+    <button class="btn" id="btnGerar" onclick="gerarLooksIA()">✨ Combinar Look Inteligente</button>
+    <div class="loader" id="loaderLook">A IA está montando os melhores looks...</div>
     <div id="resultadoLook"></div>
-  </div>
+</div>
 
-  <script>
-    let armario = JSON.parse(localStorage.getItem('mensvest_armario')) || [];
+<script>
+let roupas = JSON.parse(localStorage.getItem('mensvest_armario')) || [];
+document.getElementById('apiKey').value = localStorage.getItem('mensvest_apikey') || '';
+renderizarArmario();
 
-    // Carregar chave salva
-    document.getElementById('apiKey').value = localStorage.getItem('mensvest_apikey') || '';
+function salvarKey(){
+    localStorage.setItem('mensvest_apikey', document.getElementById('apiKey').value);
+}
 
-    function salvarKey() {
-      const key = document.getElementById('apiKey').value.trim();
-      localStorage.setItem('mensvest_apikey', key);
-    }
+function getApiKey(){
+    const key = document.getElementById('apiKey').value.trim();
+    if(!key) throw new Error("Cola sua API Key primeiro!");
+    return key;
+}
 
-    function getApiKey() {
-      const key = document.getElementById('apiKey').value.trim();
-      if (!key) {
-        alert("Por favor, insira sua chave da API da OpenAI no topo da página!");
-        throw new Error("API Key ausente");
-      }
-      return key;
-    }
-
-    // Converte o arquivo de imagem para Base64
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
+function fileToBase64(file){
+    return new Promise((resolve,reject)=>{
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
-      });
-    }
+    });
+}
 
-    // PASSO 1: IA ANALISA A ROUPA COM VISÃO COMPUTACIONAL (GPT-4o)
-    async function analisarEAdicionarRoupa(input) {
-      if (!input.files || !input.files[0]) return;
-      const file = input.files[0];
-      const base64Image = await fileToBase64(file);
-      
-      const loader = document.getElementById('loaderAnalise');
-      loader.style.display = 'block';
-
-      try {
+async function analisarRoupa(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    document.getElementById('loaderAnalise').style.display = 'block';
+    try{
         const apiKey = getApiKey();
-        
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { 
-                    type: "text", 
-                    text: "Analise esta imagem de roupa. Retorne EXATAMENTE e APENAS um JSON no formato: {\"categoria\": \"parte_cima|parte_baixo|calcado|acessorio\", \"nome\": \"ex: Camisa Polo\", \"cor\": \"ex: Azul Marinho\", \"estilo\": \"ex: Casual/Formal\"}" 
-                  },
-                  {
-                    type: "image_url",
-                    image_url: { url: base64Image }
-                  }
-                ]
-              }
-            ],
-            response_format: { type: "json_object" }
-          })
+        const base64Image = await fileToBase64(file);
+        const res = await fetch('https://api.openai.com/v1/chat/completions',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+            body:JSON.stringify({
+                model:"gpt-4o-mini",
+                messages:[{role:"user",content:[
+                    {type:"text",text:"Analise esta roupa. Responda APENAS em JSON: {categoria: 'camisa'|'calca'|'sapato'|'tenis'|'jaqueta', cor: 'cor principal', nome: 'nome curto'}"},
+                    {type:"image_url",image_url:{url:base64Image}}
+                ]}],
+                response_format:{type:"json_object"}
+            })
         });
+        const data = await res.json();
+        const info = JSON.parse(data.choices[0].message.content);
+        roupas.push({...info, src: base64Image});
+        localStorage.setItem('mensvest_armario', JSON.stringify(roupas));
+        renderizarArmario();
+    }catch(err){ alert("Erro: " + err.message) }
+    document.getElementById('loaderAnalise').style.display = 'none';
+}
 
-        const data = await response.json();
-        const analise = JSON.parse(data.choices[0].message.content);
-
-        // Salvar item analisado no banco local
-        const novoItem = {
-          id: Date.now(),
-          imagem: base64Image,
-          categoria: analise.categoria,
-          nome: analise.nome,
-          cor: analise.cor,
-          estilo: analise.estilo
-        };
-
-        armario.push(novoItem);
-        salvarArmario();
-      } catch (err) {
-        alert("Erro ao analisar imagem com a IA: " + err.message);
-      } finally {
-        loader.style.display = 'none';
-        input.value = '';
-      }
-    }
-
-    function salvarArmario() {
-      localStorage.setItem('mensvest_armario', JSON.stringify(armario));
-      renderizarArmario();
-    }
-
-    function removerItem(id) {
-      armario = armario.filter(item => item.id !== id);
-      salvarArmario();
-    }
-
-    function renderizarArmario() {
-      const grid = document.getElementById('gridArmario');
-      grid.innerHTML = armario.map(item => `
+function renderizarArmario(){
+    document.getElementById('gridArmario').innerHTML = roupas.map((r,i)=>`
         <div class="item-card">
-          <button class="btn-delete" onclick="removerItem(${item.id})">×</button>
-          <img src="${item.imagem}">
-          <div style="font-weight: bold; margin-top:4px;">${item.nome}</div>
-          <div class="badge">${item.cor}</div>
+            <button class="btn-delete" onclick="deletarRoupa(${i})">x</button>
+            <img src="${r.src}">
+            <b>${r.nome}</b><br>${r.cor}
         </div>
-      `).join('');
-    }
+    `).join('');
+}
 
-    // PASSO 2: IA ATUA COMO ESTILISTA E MONTA O LOOK DE ACORDO COM AS REGRAS DE MODA
-    async function gerarLookIA() {
-      if (armario.length < 2) {
-        return alert("Adicione pelo menos 2 peças de roupa ao seu armário primeiro!");
-      }
-
-      const loader = document.getElementById('loaderLook');
-      const resultadoDiv = document.getElementById('resultadoLook');
-      const ocasiao = document.getElementById('ocasiao').value;
-      
-      loader.style.display = 'block';
-      resultadoDiv.innerHTML = '';
-
-      // Envia apenas os metadados das roupas para economizar tokens
-      const inventarioSimplificado = armario.map(item => ({
-        id: item.id,
-        nome: item.nome,
-        categoria: item.categoria,
-        cor: item.cor,
-        estilo: item.estilo
-      }));
-
-      const promptEstilista = `
-        Você é um estilista pessoal de moda masculina altamente renomado. 
-        O usuário precisa de um look para a seguinte ocasião: "${ocasiao}".
-        
-        Aqui está a lista de roupas disponíveis no armário dele:
-        ${JSON.stringify(inventarioSimplificado)}
-
-        Escolha a melhor combinação de peças (pelo menos 1 parte_cima e 1 parte_baixo, e calçado se houver).
-        Siga regras reais de colorimetria e harmonia de estilo.
-
-        Responda APENAS em JSON no seguinte formato:
-        {
-          "ids_selecionados": [123, 456],
-          "nome_look": "Nome estiloso para o conjunto",
-          "explicacao": "Explicação curta do porquê essas cores e peças combinam para esta ocasião."
-        }
-      `;
-
-      try {
-        const apiKey = getApiKey();
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [{ role: "user", content: promptEstilista }],
-            response_format: { type: "json_object" }
-          })
-        });
-
-        const data = await response.json();
-        const resultado = JSON.parse(data.choices[0].message.content);
-
-        // Buscar as peças selecionadas pela IA
-        const pecasSelecionadas = armario.filter(item => resultado.ids_selecionados.includes(item.id));
-
-        // Exibir o Look sugerido
-        resultadoDiv.innerHTML = `
-          <div class="look-container">
-            <h3>✨ ${resultado.nome_look}</h3>
-            <div class="look-images">
-              ${pecasSelecionadas.map(p => `<img src="${p.imagem}" title="${p.nome}">`).join('')}
-            </div>
-            <div class="reasoning">
-              <strong>Por que funciona:</strong> ${resultado.explicacao}
-            </div>
-          </div>
-        `;
-
-      } catch (err) {
-        alert("Erro ao gerar look: " + err.message);
-      } finally {
-        loader.style.display = 'none';
-      }
-    }
-
-    // Inicialização
+function deletarRoupa(i){
+    roupas.splice(i,1);
+    localStorage.setItem('mensvest_armario', JSON.stringify(roupas));
     renderizarArmario();
-  </script>
+}
+
+async function gerarLooksIA(){
+    if(roupas.length < 3) return alert("Adiciona pelo menos 3 peças!");
+    const btn = document.getElementById('btnGerar');
+    document.getElementById('loaderLook').style.display = 'block';
+    btn.disabled = true;
+    
+    try{
+        const apiKey = getApiKey();
+        const lista = roupas.map(r=>`- ${r.categoria}: ${r.nome} ${r.cor}`).join('\n');
+        const ocasiao = document.getElementById('ocasiao').value;
+        
+        const res = await fetch('https://api.openai.com/v1/chat/completions',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+            body:JSON.stringify({
+                model:"gpt-4o-mini",
+                messages:[{role:"user",content:`Você é um estilista. Com base nessas roupas:\n${lista}\n\nCrie 3 looks para: ${ocasiao}. Responda APENAS em JSON: {looks:[{nome:"",pecas:[],descricao:""}]}`}],
+                response_format:{type:"json_object"}
+            })
+        });
+        const data = await res.json();
+        const resultado = JSON.parse(data.choices[0].message.content);
+        
+        document.getElementById('resultadoLook').innerHTML = resultado.looks.map((look,i)=>`
+            <div class="look-container">
+                <h4>Look ${i+1}: ${look.nome}</h4>
+                <p><b>Peças:</b> ${look.pecas.join(', ')}</p>
+                <p class="reasoning">${look.descricao}</p>
+            </div>
+        `).join('');
+    }catch(err){ alert("Erro: " + err.message) }
+    
+    document.getElementById('loaderLook').style.display = 'none';
+    btn.disabled = false;
+}
+</script>
 </body>
 </html>
-)
