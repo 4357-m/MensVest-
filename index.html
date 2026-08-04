@@ -5,30 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MensVest - Seu Estilista IA</title>
 <style>
-body { font-family: Arial; background: #111; color: #fff; text-align: center; padding: 20px; }
-.btn { background: #333; color: #fff; border: none; padding: 12px 20px; margin: 5px; border-radius: 8px; cursor: pointer; }
+body { font-family: Arial; background: #111; color: #fff; text-align: center; padding: 20px; max-width: 500px; margin: auto; }
+.btn { background: #333; color: #fff; border: none; padding: 14px 20px; margin: 8px; border-radius: 12px; cursor: pointer; width: 90%; font-size: 16px; }
 .btn-pro { background: linear-gradient(90deg, #FFD700, #FFA500); color: #000; font-weight: bold; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
 .grid img { width: 100%; border-radius: 8px; background: #222; }
-.loader { display: none; }
-select { width: 100%; margin-top: 5px; background: #333; color: #fff; border: none; padding: 5px; border-radius: 5px; }
+.card { background: #1a1a1a; padding: 15px; border-radius: 12px; margin: 15px 0; }
+select { width: 100%; margin-top: 5px; background: #333; color: #fff; border: none; padding: 8px; border-radius: 8px; }
+.loader { display: none; color: #FFD700; }
+.look-card { display: flex; justify-content: space-around; align-items: center; background: #222; padding: 15px; border-radius: 10px; margin: 10px 0; }
 </style>
 </head>
 <body>
 
 <h1>MensVest 👔</h1>
+<p>Seu Estilista IA - Estilo CalAI</p>
 
-<h2>Seu Guarda-Roupa Virtual</h2>
-<input type="file" id="galeria" accept="image/*" style="display:none">
-<input type="file" id="camera" accept="image/*" capture="camera" style="display:none">
+<div class="card">
+<h2>1. Adicionar Roupas</h2>
+<p>Tire foto de cada peça do seu armário</p>
 <input type="file" id="armario" accept="image/*" multiple style="display:none">
-
-<button class="btn" onclick="document.getElementById('camera').click()">📸 Foto Individual</button>
-<button class="btn" onclick="document.getElementById('galeria').click()">🖼️ Da Galeria</button>
 <button class="btn-pro" onclick="document.getElementById('armario').click()">🧠 Foto do Armário</button>
+<div class="loader" id="loader">Recortando roupas com IA...</div>
+<div class="grid" id="guardaRoupa"></div>
+</div>
 
-<div class="loader" id="loader">Recortando roupas...</div>
-
+<div class="card">
+<h2>2. Montar Look - Estilo CalAI</h2>
 <h3>Qual a ocasião?</h3>
 <select id="ocasiao">
   <option value="casual">😎 Casual</option>
@@ -36,14 +39,12 @@ select { width: 100%; margin-top: 5px; background: #333; color: #fff; border: no
   <option value="festa">🎉 Festa</option>
   <option value="esporte">🏃 Esporte</option>
 </select>
-
-<button class="btn-pro" onclick="montarLookInteligente()">✨ Montar Look Inteligente</button>
-
-<div id="areaLook"></div>
-<div class="grid" id="guardaRoupa"></div>
+<button class="btn-pro" onclick="gerarLooksIA()">✨ Gerar 3 Looks com IA</button>
+<div id="areaLooks"></div>
+</div>
 
 <script>
-const REMOVE_BG_KEY = '13ELAgTUNrotLEoVNNphngKm'; // SUA CHAVE
+const REMOVE_BG_KEY = '13ELAgTUNrotLEoVNNphngKm';
 let roupas = JSON.parse(localStorage.getItem('mensVestRoupas')) || [];
 
 function salvar() {
@@ -56,7 +57,6 @@ async function recortarRoupa(file) {
     let formData = new FormData();
     formData.append('image_file', file);
     formData.append('size', 'auto');
-
     let res = await fetch('https://api.remove.bg/v1.0/removebg', {
         method: 'POST',
         headers: { 'X-Api-Key': REMOVE_BG_KEY },
@@ -67,22 +67,14 @@ async function recortarRoupa(file) {
     return URL.createObjectURL(blob);
 }
 
-// FOTO DO ARMÁRIO - SEM POPUP
+// ADICIONAR ROUPAS
 document.getElementById('armario').onchange = async (e) => {
     for(let file of e.target.files) {
         let urlRecortada = await recortarRoupa(file);
         roupas.push({src: urlRecortada, categoria: 'peca', id: Date.now() + Math.random()});
     }
     salvar();
-    alert('Peças adicionadas! Defina o tipo no Guarda-Roupa')
-}
-
-// FOTO INDIVIDUAL
-document.getElementById('camera').onchange = document.getElementById('galeria').onchange = async (e) => {
-    let file = e.target.files[0];
-    let urlRecortada = await recortarRoupa(file);
-    roupas.push({src: urlRecortada, categoria: 'peca', id: Date.now()});
-    salvar();
+    alert('Peças adicionadas! Defina o tipo de cada uma')
 }
 
 function editarTipo(id, novoTipo) {
@@ -100,38 +92,48 @@ function carregarGuardaRoupa() {
                 <option ${r.categoria=='camisa'?'selected':''} value="camisa">Camisa</option>
                 <option ${r.categoria=='calca'?'selected':''} value="calca">Calça</option>
                 <option ${r.categoria=='sapato'?'selected':''} value="sapato">Sapato</option>
+                <option ${r.categoria=='acessorio'?'selected':''} value="acessorio">Acessório</option>
                 <option ${r.categoria=='peca'?'selected':''} value="peca">Outro</option>
             </select>
         </div>
     `).join('');
 }
 
-function montarLookInteligente() {
-    if (roupas.length < 3) {
-        alert("Adiciona pelo menos 3 peças primeiro!")
-        return
-    }
+// LÓGICA ESTILO CALAI - SÓ COM AS ROUPAS
+function gerarLooksIA() {
+    if(roupas.length < 3) return alert("Adiciona pelo menos 3 peças primeiro!");
+
+    const ocasiao = document.getElementById('ocasiao').value;
     
     const camisas = roupas.filter(r => r.categoria === 'camisa');
     const calcas = roupas.filter(r => r.categoria === 'calca');
     const sapatos = roupas.filter(r => r.categoria === 'sapato');
-    
-    if(camisas.length === 0 || calcas.length === 0) {
-        alert("Defina pelo menos 1 Camisa e 1 Calça no Guarda-Roupa")
-        return
+    const acessorios = roupas.filter(r => r.categoria === 'acessorio');
+
+    if(camisas.length === 0 || calcas.length === 0) return alert("Defina pelo menos 1 Camisa e 1 Calça");
+
+    // IA "escolhe" 3 combinações aleatórias
+    let looks = [];
+    for(let i=0; i<3; i++) {
+        looks.push({
+            camisa: camisas[Math.floor(Math.random() * camisas.length)],
+            calca: calcas[Math.floor(Math.random() * calcas.length)],
+            sapato: sapatos.length > 0? sapatos[Math.floor(Math.random() * sapatos.length)] : null,
+            acessorio: acessorios.length > 0? acessorios[Math.floor(Math.random() * acessorios.length)] : null,
+        })
     }
 
-    const camisa = camisas[Math.floor(Math.random() * camisas.length)];
-    const calca = calcas[Math.floor(Math.random() * calcas.length)];
-    const sapato = sapatos.length > 0? sapatos[Math.floor(Math.random() * sapatos.length)] : null;
-
-    document.getElementById('areaLook').innerHTML = `
-        <h3>Seu Look ${document.getElementById('ocasiao').value}</h3>
-        <div style="display:flex; justify-content:center; gap:10px">
-            <img src="${camisa.src}" width="120">
-            <img src="${calca.src}" width="120">
-            ${sapato? `<img src="${sapato.src}" width="120">` : ''}
-        </div>
+    document.getElementById('areaLooks').innerHTML = `
+        <h3>Seus 3 Looks para ${ocasiao}</h3>
+        ${looks.map((look, i) => `
+            <div class="look-card">
+                <b>Look ${i+1}</b>
+                <img src="${look.camisa.src}" width="70">
+                <img src="${look.calca.src}" width="70">
+                ${look.sapato? `<img src="${look.sapato.src}" width="70">` : ''}
+                ${look.acessorio? `<img src="${look.acessorio.src}" width="70">` : ''}
+            </div>
+        `).join('')}
     `;
 }
 
